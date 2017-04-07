@@ -21,7 +21,7 @@ LINKFLAGS=-L/usr/local/opt/opencv/lib \
 		  -lmatio \
 
 
-ALLTARGETS=bsif  bsifc
+ALLTARGETS=newbsif
 
 %:%.cpp
 	$(CXX) -o $@ $(CXXFLAGS) $< $(LINKFLAGS)
