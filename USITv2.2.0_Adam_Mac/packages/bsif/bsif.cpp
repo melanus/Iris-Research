@@ -31,6 +31,8 @@
 using namespace std;
 using namespace cv;
 
+int histtotal[256] = {0};
+
 /*
  * Academic License - for use in teaching, academic research, and meeting
  * course requirements at degree granting institutions only.  Not for
@@ -378,6 +380,7 @@ void bsif(const emxArray_real_T *img, const double texturefilters_data[], const
   for (i0 = 0; i0 < 2; i0++) {
     uv0[i0] = (unsigned int)img->size[i0];
   }
+
 
   emxInit_real_T(&codeImg, 2);
   i0 = codeImg->size[0] * codeImg->size[1];
@@ -2484,6 +2487,8 @@ void hist(const emxArray_real_T *Y, const double X_data[], const int X_size[2],
   if (edges_size_idx_1 - 1 > 0) {
     no_data[no_size[1] - 1] += nn_data[edges_size_idx_1 - 1];
   }
+/*
+    */
 }
 
 boolean_T b_isfinite(double x)
@@ -3055,14 +3060,22 @@ emxArray_real_T* parse_img(const Mat& mat, const Cell& cell, const int shift) {
  */
 void normalizeHistogram(double* normHist, const double* hist, const int length) {
     int histSum = 0;
-    printf("\n\n\n\n\n");
-    FILE *f = fopen("hist.csv", "w");
-    if (f==NULL) printf("FUCK");
+    /*
+    static int call_count = 0;
+    call_count++;
+    string filename = to_string(call_count) + "hist.csv";
+    //int lengthtest = sizeof(no_data)/sizeof(no_data[0]);
+    FILE *f = fopen(filename.c_str(), "w");
+    if (f==NULL) printf("Not working");
+    for (int i = 0; i < length; i++)
+	    fprintf(f, "%d, %f\n", i, hist[i]);
+    fclose(f);
+    */
     for (int i = 0; i < length; i++) {
 	    histSum += hist[i];
-	fprintf(f, "%d, %f\n", i, hist[i]);
+	    histtotal[i]+=hist[i];
     }
-    fclose(f);
+    printf("the sum of the thing is \t%d\n", histSum);
     for (int i = 0; i < length; i++) normHist[i] = hist[i] / histSum;
 }
 
@@ -3078,7 +3091,6 @@ void featureExtract(Mat& code, const Mat& texture, const double filter[], const 
     const int verticalCellNumber = texture.cols / CELL_WIDTH;
     const int horizontalCellNumber = texture.rows / CELL_HEIGHT;
     const int histogramSize = (int) pow(2.0, filterDims[2]);
-    printf(" in func Histogram size is %d \n", histogramSize);
 
     int histogramDim[2];
     double *histogram = new double[histogramSize];
@@ -3099,10 +3111,12 @@ void featureExtract(Mat& code, const Mat& texture, const double filter[], const 
 
             normalizeHistogram(histogram, histogram, histogramSize);
 
-	    //printf("about to print stuff \n");
-	    for (int i = 0; i < histogramSize; i++) {
-		    //printf("histogram of %d  is  %f\n", i, histogram[i]);
-	    }
+	    // putting to file
+	    FILE *f = fopen("normalhist.csv", "w");
+	    if (f==NULL) printf("not working");
+	    for (int i = 0; i < histogramSize; i++)
+		    fprintf(f, "%d, %f\n", i, histogram[i]);
+	    fclose(f);
 
             for (int histIndex = 0, colIndex = 0; histIndex < histogramSize; histIndex++, colIndex += 2) { //translate 16-Bit integer array to 8-Bit-Image 
                 uint16_t histValue = (uint16_t) (histogram[histIndex] * MAX_UNSIGNED_16_BIT_VALUE);
@@ -3629,5 +3643,14 @@ int main(int argc, char *argv[]) {
         printf("Exit with errors.\n");
         exit(EXIT_FAILURE);
     }
+    FILE *f = fopen("totalhist.csv", "w");
+    if (f==NULL) printf("Something wrong");
+    int tst = 0;
+    for (int i = 0; i < 256; i++){
+	    tst+=histtotal[i];
+	    fprintf(f, "%d, %d\n", i, histtotal[i]);
+    }
+    fclose(f);
+    printf("%d",tst);
     return EXIT_SUCCESS;
 }
