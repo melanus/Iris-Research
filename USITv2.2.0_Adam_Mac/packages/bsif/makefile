@@ -2,7 +2,7 @@ CXX=g++
 
 # Linux
 CXXFLAGS=-O3 -std=c++11 -Wall -fmessage-length=0 -s
-CXXFLAGS=-g -gdwarf-3 -Wall -std=c++11 -Wformat -I /usr/local/opt/opencv/include/ -I /usr/local/boost-1.63.0/include/ -I /Users/mattlanus/Downloads/matio-1.5.10/src/
+CXXFLAGS=-g -gdwarf-3 -Wall -std=c++11 -Wformat -I /usr/local/opt/opencv/include/ -I /usr/local/boost-1.63.0/include/ -I /Users/mattlanus/Downloads/matio-1.5.10/src/ -I /Applications/MATLAB_R2016b.app/extern/include/ 
 LINKFLAGS=-L/usr/local/opt/opencv/lib \
 		  -lopencv_core \
 		  -lopencv_highgui \
@@ -19,6 +19,13 @@ LINKFLAGS=-L/usr/local/opt/opencv/lib \
 		  -lboost_regex \
 		-L/usr/local/lib \
 		  -lmatio \
+		-L/Applications/MATLAB_R2016b.app/bin/maci64/ \
+		  -leng \
+		  -lm \
+		  -lut \
+		  -lmx \
+		  -lmex \
+		  -lmat \
 
 
 ALLTARGETS=newbsif
