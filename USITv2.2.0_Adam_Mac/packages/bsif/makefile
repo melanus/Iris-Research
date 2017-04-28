@@ -20,6 +20,7 @@ LINKFLAGS=-L/usr/local/opt/opencv/lib \
 		-L/usr/local/lib \
 		  -lmatio \
 		-L/Applications/MATLAB_R2016b.app/bin/maci64/ \
+		  -lstdc++ \
 		  -leng \
 		  -lm \
 		  -lut \
