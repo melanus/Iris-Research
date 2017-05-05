@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
 	
 	// reading in the image with open cv - returns array of doubles
 	cv::Mat image = cv::imread(argv[1], 0);
-	//image.convertTo(image, CV_64FC1);
 
 	// Opening the matlab file
 	const char *dir = "./texturefilters/";
@@ -55,11 +54,12 @@ int main(int argc, char *argv[]) {
 	int r = (int) dims[0];
 	
 
-
+	// Closing mat file
 	if (matClose(pmat) != 0) {
 		printf("Error closing file %s\n",result);
 		return(1);
 	}
+
 	r = floor(r/2);
 	//cout << "numScl is " << numScl << endl;
 	int size_of_x = (2*r) + 1;
@@ -81,15 +81,15 @@ int main(int argc, char *argv[]) {
 	// wrapping the image - currently semi hardcoded - can be changed later
 	int border = r;
 	int bordertype = cv::BORDER_WRAP;
-	cv::Mat imgWrap(image.rows + r*2, image.cols + r*2, CV_8UC1);
-	cv::copyMakeBorder(image, imgWrap, border, border, border, border, bordertype);
+	//cv::Mat imgWrap(image.rows + r*2, image.cols + r*2, CV_8UC1);
+	//cv::copyMakeBorder(image, imgWrap, border, border, border, border, bordertype);
 
 	//cout << imgWrap << endl;
 
 	// Loop over scales
 	cv::Mat ci;
 	cv::Mat tmpcv;
-	int count = 0, arrcount = 0; // thirdcount = 0;
+	int count = 0, arrcount = 0; 
 	double tmp[dims[0]*dims[1]];
 	int itr = 0;
 	for (int i = numScl - 1; i >= 0; i--){
