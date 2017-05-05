@@ -1,12 +1,9 @@
 #include <cstdio>
-#include <vector>
-#include <map>
 #include <iostream>
-#include <matio.h>
+#include <fstream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <time.h>
 #include <string>
 #include <math.h>
 #include <stdio.h>
@@ -62,7 +59,6 @@ int main(int argc, char *argv[]) {
 
 	r = floor(r/2);
 	//cout << "numScl is " << numScl << endl;
-	int size_of_x = (2*r) + 1;
 	
 	//initializing matrix of 1s
 	double codeImg[image.rows][image.cols];
@@ -71,48 +67,47 @@ int main(int argc, char *argv[]) {
 			codeImg[i][j] = 1;
 		}
 	}
-	double x[size_of_x];
-	int elm = -r;
-	for (int i = 0; i < size_of_x; i++){
-		x[i] = elm;
-		elm++;
-	}
 
-	// wrapping the image - currently semi hardcoded - can be changed later
+
+	// creates the border around the image - it is wrapping
 	int border = r;
 	int bordertype = cv::BORDER_WRAP;
-	//cv::Mat imgWrap(image.rows + r*2, image.cols + r*2, CV_8UC1);
-	//cv::copyMakeBorder(image, imgWrap, border, border, border, border, bordertype);
-
-	//cout << imgWrap << endl;
+	cv::Mat imgWrap(image.rows + r*2, image.cols + r*2, CV_64FC1);
+	cv::copyMakeBorder(image, imgWrap, border, border, border, border, bordertype);
 
 	// Loop over scales
-	cv::Mat ci;
-	cv::Mat tmpcv;
+	cv::Mat ci; // the textured image after filter
+	cv::Mat tmpcv; // the texture
 	int count = 0, arrcount = 0; 
 	double tmp[dims[0]*dims[1]];
 	int itr = 0;
+	// pr is the array of filter
+	double *pr;
+	pr = (double *)mxGetData(pa);
+
+	// pull the data from the matfile into an array
+	// the matlab file is in one long single array
+	// we need to start w/ the last filter and work our way forward
 	for (int i = numScl - 1; i >= 0; i--){
 		// Diagnose array pa
-		count = 121*i;
+		count = dims[0]*dims[1]*i; //last filter
 		arrcount = 0;
-		double *pr;
-		pr = (double *)mxGetData(pa);
 		for (int j = 0; j < dims[0]; j++){
 			for (int k = 0; k < dims[1]; k++){
+				// place it into respective spot in real array
 				tmp[arrcount+(k*dims[0])] = pr[count];
-
 				count+=1;
 			}
 			arrcount+=1;
-			//cout << endl;
 		}
-		tmpcv = cv::Mat(11,11, CV_64FC1, &tmp);
-		//cout << tmpcv << endl;
+		//convert the array into matlab object to use w/ filter
+		tmpcv = cv::Mat(dims[0],dims[1], CV_64FC1, &tmp);
 
-		cv::filter2D(image, ci, CV_64FC1, tmpcv, cv::Point(-1, -1), 0, cv::BORDER_WRAP);
+		// running the filter on the image w/ BORDER WRAP - equivalent to filter2 in matlab
+		cv::filter2D(imgWrap, ci, CV_64FC1, tmpcv, cv::Point(-1, -1), 0);
 
-		//cout << ci << endl;
+		// This will convert any positive values in the matrix
+		// to 2^(i-1) as it did in the matlab software
 		for (int j = 0; j < image.rows; j++){
 			for (int k = 0; k < image.cols; k++){
 				if (ci.at<double>(j,k) > 0)
@@ -120,77 +115,30 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		itr++;
+		//cout << "Print statement:  " << i << endl;
 
 	}
 
-	int histogram[256] = {0};
+	// Creating the histogram
+	int histsize = pow(2, dims[2]);
+	int histogram[histsize];
+	memset(histogram, 0, histsize*sizeof(int));
 	for (int j = 0; j < image.rows; j++){
 		for (int k = 0; k < image.cols; k++){
 			histogram[(int)codeImg[j][k]]++;
 		}
 	}
-	for (int i = 0; i < 256; i++)
-		cout << histogram[i] << ",";
+	
+	// Outputting to a CSV file
+	ofstream histfile;
+	histfile.open("histogram.csv", ios::out | ios::trunc);
+	for (int i = 0; i < histsize; i++)
+		histfile << histogram[i] << ",";
+	histfile.close();
 
 	mxDestroyArray(pa);
 
 
-
-
-
-
-
-
-
-
-
-
-	/*
-	// matio call to open file
-	mat_t *mat = Mat_Open(result, MAT_ACC_RDONLY);
-	matvar_t *matvar;
-
-	// reading in data (number of bits of textureFilter)
-	matvar = Mat_VarReadNextInfo(mat);
-	int numScl = matvar->dims[2];
-	int r = matvar->dims[0];
-	// make spatial coordinates for sliding window
-	r = floor(r/2);
-	cout << "numScl is " << matvar->dims[0] << endl;
-//	cout << matvar->compression << endl;
-//cout << (double*)(matvar->data)<<endl;
-//	double* data = (double*)(matvar->data);
-//	cout << data[0] << endl;
-	int size_of_x = (2*r) + 1;
-	Mat_VarFree(matvar);
-	Mat_Close(mat);
-	
-	//initializing matrix of 1s
-	//vector<vector<double>> codeImg;
-	double codeImg[image.rows][image.cols];
-	for (int i = 0; i < image.rows; i++)
-		for (int j = 0; j < image.cols; j++)
-			codeImg[i][j] = 1;
-	double x[size_of_x];
-	int elm = -r;
-	for (int i = 0; i < size_of_x; i++){
-		x[i] = elm;
-		elm++;
-	}
-
-	// wrapping the image - currently semi hardcoded - can be changed later
-	int border = r;
-	int bordertype = cv::BORDER_WRAP;
-	cv::Mat buffer(image.rows + r*2, image.cols + r*2, CV_8UC1);
-	cv::copyMakeBorder(image, buffer, border, border, border, border, bordertype);
-	//cout << buffer << endl;
-
-	// Loop over scales
-	for (int i = 1; i < numScl; i++){
-
-	}
-
-*/
 	return 0;
 	
 
