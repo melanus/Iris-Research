@@ -122,22 +122,6 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	/*
-	cout << "cci = [";
-	for (int j = 0; j < image.rows; j++){
-		for (int k = 0; k < image.cols; k++){
-			if (k+1 == image.cols)
-				cout << ci.at<double>(j+4,k+4);
-			else
-				cout << ci.at<double>(j+4,k+4) << ", ";
-		}
-		if (j+1 == image.rows)
-			cout << "]" << endl;
-		else
-			cout << endl;
-	}
-	*/
-
 	//cout << ci << endl;
 	// Creating the histogram
 	int histsize = pow(2, dims[2]);
