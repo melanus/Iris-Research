@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 	cv::Mat imgWrap(image.rows + r*2, image.cols + r*2, CV_64FC1);
 	cv::copyMakeBorder(image, imgWrap, border, border, border, border, bordertype);
 
+	//cout << imgWrap << endl;
 	// Loop over scales
 	cv::Mat ci; // the textured image after filter
 	cv::Mat tmpcv; // the texture
@@ -103,14 +104,16 @@ int main(int argc, char *argv[]) {
 		//convert the array into matlab object to use w/ filter
 		tmpcv = cv::Mat(dims[0],dims[1], CV_64FC1, &tmp);
 
+		//cout << tmpcv << endl;
 		// running the filter on the image w/ BORDER WRAP - equivalent to filter2 in matlab
+		// filter2d will incidentally create another border - we do not want this extra border
 		cv::filter2D(imgWrap, ci, CV_64FC1, tmpcv, cv::Point(-1, -1), 0);
 
 		// This will convert any positive values in the matrix
 		// to 2^(i-1) as it did in the matlab software
 		for (int j = 0; j < image.rows; j++){
 			for (int k = 0; k < image.cols; k++){
-				if (ci.at<double>(j,k) > 0)
+				if (ci.at<double>(j+4,k+4) > 0) // ignore the extra border added on
 					codeImg[j][k] = codeImg[j][k] + pow(2,itr);
 			}
 		}
@@ -119,6 +122,23 @@ int main(int argc, char *argv[]) {
 
 	}
 
+	/*
+	cout << "cci = [";
+	for (int j = 0; j < image.rows; j++){
+		for (int k = 0; k < image.cols; k++){
+			if (k+1 == image.cols)
+				cout << ci.at<double>(j+4,k+4);
+			else
+				cout << ci.at<double>(j+4,k+4) << ", ";
+		}
+		if (j+1 == image.rows)
+			cout << "]" << endl;
+		else
+			cout << endl;
+	}
+	*/
+
+	//cout << ci << endl;
 	// Creating the histogram
 	int histsize = pow(2, dims[2]);
 	int histogram[histsize];
@@ -132,8 +152,10 @@ int main(int argc, char *argv[]) {
 	// Outputting to a CSV file
 	ofstream histfile;
 	histfile.open("histogram.csv", ios::out | ios::trunc);
+	histfile << "Hist = [";
 	for (int i = 0; i < histsize; i++)
-		histfile << histogram[i] << ",";
+		histfile << histogram[i] << ", ";
+	histfile << "];";
 	histfile.close();
 
 	mxDestroyArray(pa);
